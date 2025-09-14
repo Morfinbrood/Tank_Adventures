@@ -1,0 +1,26 @@
+{
+  "name": "@game/lobby-service",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node --loader ts-node/esm src/main.ts",
+    "start": "node dist/main.js",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@game/authz": "file:../../packages/authz",
+    "@game/core-protocol": "file:../../packages/core-protocol",
+    "express": "4.19.2",
+    "helmet": "7.1.0",
+    "morgan": "1.10.0",
+    "pg": "8.11.5"
+  },
+  "devDependencies": {
+    "@types/express": "4.17.21",
+    "@types/morgan": "1.9.6",
+    "@types/node": "20.11.30",
+    "@types/pg": "8.6.6",
+    "ts-node": "10.9.2",
+    "typescript": "5.5.4"
+  }
+}

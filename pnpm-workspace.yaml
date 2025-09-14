@@ -1,0 +1,6 @@
+packages:
+  - "frontend"
+  - "backend/src/*"           # Auth, Lobby, Marketplace, Chat, Db, Gateway
+  - "backend/Tank_adventure"
+  - "backend/src/*.bus"       # шины
+  - "backend/packages/*"      # локальные пакеты (@game/authz, @game/core-protocol, ...)

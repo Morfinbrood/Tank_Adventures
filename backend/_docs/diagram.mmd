@@ -1,0 +1,28 @@
+sequenceDiagram
+  autonumber
+  participant FE as Frontend (Next.js)
+  participant ALB as ALB (AWS)
+  participant AUTH as Auth Svc
+  participant LOB as Lobby Svc
+  participant MKT as Marketplace Svc
+  participant CHAT as Chat WS
+  participant GAME as Tank_adventure WS
+  participant DB as RDS Postgres
+
+  FE->>AUTH: POST /auth/register|login
+  AUTH->>DB: users, refresh_tokens
+  AUTH-->>FE: accessToken (JWT RS256)
+
+  FE->>LOB: GET /lobbies (Authorization: Bearer)
+  LOB->>DB: lobbies, lobby_players
+  FE->>LOB: POST /lobbies -> {id}
+  FE->>LOB: POST /lobbies/:id/join|ready|start
+  LOB-->>FE: { matchId }
+
+  FE->>CHAT: WS /chat/ws?room=lobby:{id}&token=JWT
+  CHAT->>DB: chat_messages (last 10)
+
+  FE->>GAME: WS /game/ws?matchId={id}&token=JWT
+  GAME-->>FE: state @300ms
+
+  Note over AUTH,LOB, MKT, CHAT, GAME: All services verify JWT via Auth JWKS

@@ -1,0 +1,13 @@
+{
+  "name": "tank-adventure-monorepo",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "devDependencies": {
+    "typescript": "5.5.4"
+  },
+  "scripts": {
+    "install:all": "pnpm -w install",
+    "build": "pnpm -r --filter ./backend/** build",
+    "dev": "echo \"Run per service (e.g., pnpm --filter @game/gateway dev)\""
+  }
+}

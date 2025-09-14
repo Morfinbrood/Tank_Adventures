@@ -1,0 +1,10 @@
+node_modules
+.env
+.DS_Store
+dist
+coverage
+.next
+*.log
+*.sqlite
+**/.cdk.staging
+cdk.out

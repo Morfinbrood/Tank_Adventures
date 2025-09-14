@@ -1,0 +1,177 @@
+version: "3.9"
+
+services:
+  gateway:
+    build:
+      context: ./backend
+      dockerfile: src/Gateway/Dockerfile
+    environment:
+      SERVICE_NAME: gateway
+      PORT: 4100
+      AUTH_BASE_URL: http://auth:4001
+      LOBBY_BASE_URL: http://lobby:4002
+      MARKET_BASE_URL: http://marketplace:4003
+      CHAT_WS_UPSTREAM: ws://chat:4004/ws
+      GAME_WS_UPSTREAM: ws://game:4005/ws
+      DB_BASE_URL: http://dbsvc:4010
+      AUTH_JWKS_URL: http://auth:4001/.well-known/jwks.json
+      JWT_ISSUER: http://auth:4001
+      JWT_AUDIENCE: tank-adventure
+    depends_on:
+      - auth
+      - lobby
+      - marketplace
+      - chat
+      - game
+      - dbsvc
+    ports:
+      - "4100:4100"
+
+  dbsvc:
+    build:
+      context: ./backend
+      dockerfile: src/Db/Dockerfile
+    environment:
+      SERVICE_NAME: db
+      PORT: 4010
+      DATABASE_URL: postgres://game:gamepass@db:5432/game
+      AUTH_JWKS_URL: http://auth:4001/.well-known/jwks.json
+      JWT_ISSUER: http://auth:4001
+      JWT_AUDIENCE: tank-adventure
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    ports:
+      - "4010:4010"
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: game
+      POSTGRES_PASSWORD: gamepass
+      POSTGRES_DB: game
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U game"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  auth:
+    build:
+      context: ./backend
+      dockerfile: src/Auth/Dockerfile
+    environment:
+      SERVICE_NAME: auth
+      PORT: 4001
+      DATABASE_URL: postgres://game:gamepass@db:5432/game
+      AUTH_PRIVATE_KEY_PEM: ""
+      JWT_ISSUER: http://auth:4001
+      JWT_AUDIENCE: tank-adventure
+      ACCESS_TTL_SEC: "900"
+      REFRESH_TTL_SEC: "1209600"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "4001:4001"
+
+  lobby:
+    build:
+      context: ./backend
+      dockerfile: src/Lobby/Dockerfile
+    environment:
+      SERVICE_NAME: lobby
+      PORT: 4002
+      DATABASE_URL: postgres://game:gamepass@db:5432/game
+      AUTH_JWKS_URL: http://auth:4001/.well-known/jwks.json
+      JWT_ISSUER: http://auth:4001
+      JWT_AUDIENCE: tank-adventure
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    ports:
+      - "4002:4002"
+
+  marketplace:
+    build:
+      context: ./backend
+      dockerfile: src/Marketplace/Dockerfile
+    environment:
+      SERVICE_NAME: marketplace
+      PORT: 4003
+      DATABASE_URL: postgres://game:gamepass@db:5432/game
+      AUTH_JWKS_URL: http://auth:4001/.well-known/jwks.json
+      JWT_ISSUER: http://auth:4001
+      JWT_AUDIENCE: tank-adventure
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    ports:
+      - "4003:4003"
+
+  chat:
+    build:
+      context: ./backend
+      dockerfile: src/Chat/Dockerfile
+    environment:
+      SERVICE_NAME: chat
+      PORT: 4004
+      DATABASE_URL: postgres://game:gamepass@db:5432/game
+      AUTH_JWKS_URL: http://auth:4001/.well-known/jwks.json
+      JWT_ISSUER: http://auth:4001
+      JWT_AUDIENCE: tank-adventure
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    ports:
+      - "4004:4004"
+
+  game:
+    build:
+      context: ./backend
+      dockerfile: Tank_adventure/Dockerfile
+    environment:
+      SERVICE_NAME: tank_adventure
+      PORT: 4005
+      DATABASE_URL: postgres://game:gamepass@db:5432/game
+      AUTH_JWKS_URL: http://auth:4001/.well-known/jwks.json
+      JWT_ISSUER: http://auth:4001
+      JWT_AUDIENCE: tank-adventure
+      TICK_MS: "300"
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    ports:
+      - "4005:4005"
+
+  fe:
+    build: ./frontend
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: "http://localhost:4100/api"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - gateway
+      - auth
+      - lobby
+      - marketplace
+      - chat
+      - game
+      - dbsvc
+
+volumes:
+  db_data:
